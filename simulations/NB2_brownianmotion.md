@@ -349,11 +349,11 @@ plt.show()
 energy_tot = np.array(energy_tot)
 afwijking = energy_tot - energy_tot[0]
 
-plt.figure()
-plt.plot(time, afwijking, 'r.-')
-plt.xlabel("Time (simulatie-eenheden)")
-plt.ylabel(r"$E - E_0$ (simulatie-eenheden)")
-plt.show()
+# plt.figure()
+# plt.plot(time, afwijking, 'r.-')
+# plt.xlabel("Time (simulatie-eenheden)")
+# plt.ylabel(r"$E - E_0$ (simulatie-eenheden)")
+# plt.show()
 
 print("max afwijking:", np.max(np.abs(afwijking)))
 print("relatieve afwijking:", np.max(np.abs(afwijking)) / energy_tot[0])
@@ -620,7 +620,7 @@ Voeg voor deze regel goede metadata toe.
 ```
 
 ```{solution} ex-brownian-1
-In de laatste regel wordt één extra deeltje aan de lijst `particles` toegevoegd, namelijk het Brownse deeltje. Omdat de lus maar tot N - 1 loopt, zijn er 39 lichte gasdeeltjes en 1 zware, en samen dus weer 40.
+In de laatste regel wordt een extra deeltje aan de lijst `particles` toegevoegd, namelijk het Brownse deeltje. Omdat de lus maar tot N - 1 loopt, zijn er 39 lichte gasdeeltjes en 1 zware, en samen dus weer 40.
 
 Het zware deeltje beweegt alleen doordat de lichte deeltjes er willekeurig tegenaan botsen. Elke botsing geeft een klein, willekeurig duwtje. Omdat het deeltje zwaar is, verandert elke botsing de snelheid maar een klein beetje en beweegt het veel lamgzamer dan het gas.
 ```
@@ -913,11 +913,9 @@ print("totaal aantal botsingen:", sum(botsingen))
 **Verschillen:** Het lichte deeltje beweegt snel door de hele box. Het zware deeltje ($m = 20$) maakt kleine stapjes rond het midden, omdat elke botsing zijn snelheid maar een klein beetje verandert ($v_\text{zwaar} \approx v_\text{licht}/\sqrt{20} \approx 0{,}2$).
 
 **Meerdere keren runnen:** Elke run geeft een ander pad, maar het lichte deeltje komt steeds veel verder dan het zware.
-
-
-We zouden gevoel willen krijgen voor het aantal botsingen dat per tijdseenheid plaatsvindt. 
+ 
 Elke keer dat er een botsing plaatsvindt, zou de counter met 1 omhoog moeten gaan.
-Idealiter wordt het aantal botsingen opgeslagen in een array zodat je het aantal botsingen als functie van de tijd kunt weergeven.
+Het beste is als het aantal botsingen opgeslagen zoud worden in een array zodat je het aantal botsingen als functie van de tijd kunt weergeven.
 
 ```{exercise}
 Pas bovenstaand idee toe in de eerder gemaakte code.
@@ -1012,7 +1010,7 @@ def afgelegde_weg(deeltjes, start):
         dy = p.r[1] - r0[1]
         afstand.append(np.sqrt(dx**2 + dy**2))
     
-    return afstand
+    return np.array(afstand)
 
 
 def plot_histogram(afstand_licht, afstand_zwaar):
