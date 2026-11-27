@@ -221,10 +221,13 @@ Schrijf een functie die de temperatuur van het gas in onze simulatie bepaalt:
 ```
 
 ```python tags=["NB3_tempfun"]
+k_b = 1.380649 * 10**(-23)
+
 def temperature(particles) -> float:
-    temp = 0.0 
-    ### YOUR CODE HERE ###
-    return temp
+    # Twee dimensies, x en y. Alle kinetische energie wordt behouden.
+    f = 2
+    mean_E_kin = np.mean([p.kin_energy for p in particles])
+    return 2 * mean_E_kin / (f * k_b)
 ```
 
 <!-- #region tags=[] -->
@@ -246,13 +249,15 @@ create_particles(particles)
 for i in range(100):
     take_time_step(particles)
     # vastleggen van temperatuur per tijdstap
-    ### YOUR CODE HERE ###
+    temperatures[i] = temperature(particles)
 
 plt.figure()
 plt.xlabel('Time')
 plt.ylabel('Temperature')
 # plotten van tijd tegen temperatuur
-### YOUR CODE HERE ###
+plt.plot(times, temperatures, 'b-')
+plt.xlabel('Tijd (s)')
+plt.ylabel('Temperatuur (K)')
 plt.show()
 ```
 
@@ -347,16 +352,16 @@ particles = []
 pressures = np.zeros(100, dtype=float)
 times = np.linspace(1, 100, 100)
 
-### YOUR CODE HERE ###
+create_particles(particles)
+for i in range(100):
+    take_time_step(particles)
+    pressures[i] = pressure
 
 plt.figure()
 plt.xlabel('Time [step]')
 plt.ylabel('Pressure [a.u.]')
-
 plt.plot(times, pressures, '-r')
-
 plt.show()
-
 ```
 
 <!-- #region tags=[] -->
@@ -376,8 +381,10 @@ Zet je initiële waarden weer terug.
 <!-- #endregion -->
 
 ```python tags=[]
-### YOUR CODE HERE ###
+# Om de dichtheid gelijk te houden moet het oppervlak vergroot worden
 
+BOX_SIZE_0 = 10 * np.sqrt(10)
+N = 400
 ```
 
 Een goedkoper alternatief bestaat uit het middelen van de druk over de tijd.
@@ -425,8 +432,20 @@ times = np.linspace(1, N_steps, N_steps)
 
 create_particles(particles)
 
-### YOUR CODE HERE ###
+pressure = 0.0
+for i in range(N_steps):
+    take_time_step(particles)
+    pressures[i] = pressure
 
+plt.figure()
+plt.xlabel('Time [step]')
+plt.ylabel('Pressure [a.u.]')
+plt.plot(times, pressures, '-r')
+plt.axhline(N * 0.5 / BOX_SIZE_0**2, color='k', ls='--', label='ideale gas: $NkT/A$')
+plt.legend()
+plt.show()
+
+print('gemiddelde druk:', np.mean(pressures[50:]))
 ```
 
 Met de middeling kun je beter zien wat de gemiddelde waarde voor de druk in dit systeem is. Als dit voor jouw simulatie lastig is kan je de factor `alpha` aanpassen in de functie 'handle_walls`, zodat je over een langere periode het gemiddelde neemt. Hou daarbij wel rekening met de eis in [bovenstaande formule](int_norm)
@@ -437,7 +456,7 @@ We kunnen de gevonden druk nu wel uitdrukken in SI-eenheden met behulp van de vo
 ```
 
 ```{solution} ex-druktemp-7
-### YOUR CODE HERE ###
+Een fietsband is een 3D object maar een simulatie is 2D.
 ```
 
 
@@ -449,7 +468,7 @@ Leg op basis van de vormen die je ziet en de bijbehorende wiskunde uit dat dit e
 ```
 
 ```{solution} ex-druktemp-8
-### YOUR CODE HERE ###
+Als je de formule herschrijf zie je een sommatie van waarbij elke meting k wordt toegevoegd aan de som met een macht k. 
 ```
 
 
@@ -479,7 +498,28 @@ Controleer of je uitkomst overeenkomt met de theorie en verifieer hiermee de cod
 ```
 
 ```python
-### YOUR CODE HERE ###
+# Theoretische variabelen
+
+m = particles[0].m
+A = BOX_SIZE_0 ** 2
+v2_mean = np.mean([np.dot(p.v, p.v) for p in particles])
+P_theorie = m * N / A * v2_mean / 2
+
+# De simulatie
+
+N_steps = 5000
+pressures = np.zeros(N_steps)
+pressure = 0.0
+create_particles(particles)
+for i in range(N_steps):
+    take_time_step(particles)
+    pressures[i] = pressure
+
+P_sim = np.mean(pressures[100:])
+
+print(f'theorie: {P_theorie:.3f}')
+print(f'simulatie: {P_sim:.3f}')
+print(f'verhouding: {P_sim / P_theorie:.2f}')
 ```
 
 In [de formule voor de tweedimensionale druk](2d_pressure) kan je de structuur van de ideale gaswet herkennen. 
@@ -493,7 +533,28 @@ Herleid dezelfde formule af voor het driedimensionale geval. Laat zien welke rel
 
 ```{solution} ex-druktemp9b
 Geef hier de relatie tussen de constanten...
-### YOUR CODE HERE ###
+
+Kubus met ribbe $l$
+
+wandoppervlak $A = l^2$
+
+volume $V = l^3$.
+
+Stoot per botsing: $\Delta p = 2mv_x$, waarbij de tijd tussen de botsingen: $\Delta t = 2l/v_x$.
+
+De druk per deeltje is:
+
+$$
+P = \frac{\Delta p}{A\,\Delta t} = \frac{mv_x^2}{V}
+$$
+
+Als we de som nemen over $N$ deeltjes en ($\langle v_x^2 \rangle = \frac{1}{3}\langle v^2 \rangle$) krijg je:
+
+$$
+PV = \frac{2}{3} N \cdot \frac{1}{2}m\langle v^2 \rangle
+$$
+
+Vullen we hier $\frac{3}{2}kT = \frac{1}{2}m\langle v^2 \rangle$ in, dan staat er $PV = NkT$. Dat is de ideale gaswet per deeltje, dus niet per mol. Als je dit vergelijkt met $pV = nRT$ (met $n = N/N_A$), dan is de gasconstante eigenlijk de Boltzmannconstante x het aantal deeltjes in een mol.
 ```
 
 
@@ -519,7 +580,47 @@ Je ziet dat de druk een statistisch bepaalde grootheid is die met de tijd variee
 ```
 
 ```python
-### YOUR CODE HERE ###
+# originele waarden bewaren
+N_ORIG = N
+BOX_SIZE_ORIG = BOX_SIZE_0
+
+def druk_dist(n_particles, n_steps=20000, n_skip=200):
+    """ Geeft de druk per tijdstap voor deeltjes bij constante dichtheid. """
+    # Aangezien de globale variabelen worden aangepast
+    # en anders niet buiten de scope van de functie te gebruiken zijn.
+    global N, BOX_SIZE_0, pressure
+    
+    N = n_particles
+    BOX_SIZE_0 = 10 * np.sqrt(n_particles / 40)
+    particles = []
+    create_particles(particles)
+    pressure = 0.0
+    values = np.zeros(n_steps)
+    for i in range(n_steps):
+        take_time_step(particles)
+        values[i] = pressure
+
+    N = N_ORIG
+    BOX_SIZE_0 = BOX_SIZE_ORIG
+    return values[n_skip:]
+
+results = {}
+for n in [40, 80]:
+    P = druk_dist(n)
+    results[n] = (np.mean(P), np.std(P))
+    plt.hist(P, bins=50, density=True, alpha=0.5, label=f'N = {n}')
+
+plt.plot()
+plt.xlabel('Pressure [a.u.]')
+plt.ylabel('Kansdichtheid')
+plt.legend()
+plt.show()
+
+for n, (mu, sigma) in results.items(): print(f'N={n}: <P>={mu:.3f}, sigma={sigma:.3f}, sigma/<P>={sigma/mu:.3f}')
+
+# Dit is een schaalfactor zodat de uitdrukking wordt gedaan in 10^23 deeltjes
+rel_40 = results[40][1] / results[40][0]
+print('geschatte relatieve variatie bij 1e23 deeltjes:', rel_40 * np.sqrt(40 / 1e23))
 ```
 
 ```python
